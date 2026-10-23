@@ -1163,7 +1163,7 @@ function applyChat(p,out){
   }
   return newest;
 }
-// a rolagem é comprimida no começo e no fim da conversa: 1 rolada aproxima e traz a 1ª mensagem; 1 rolada por mensagem; 1 rolada do "Quero." à frase
+// a rolagem é comprimida no começo e no fim da conversa: 1 rolada aproxima e traz a 1ª mensagem; 1 rolada por mensagem (3, com etiqueta do setor); 1 rolada da última à frase
 const HSEG=[[0,.18,.24],[.18,.26,1],[.26,.47,.22],[.47,.56,.5],[.56,1,1]];
 const HRAW=HSEG.reduce((a,g)=>a+(g[1]-g[0])*g[2],0);
 function heroTarget(){ const r=hero.getBoundingClientRect(); const len=hero.offsetHeight-stage.offsetHeight; let u=clamp(-r.top/Math.max(1,len))*HRAW;
