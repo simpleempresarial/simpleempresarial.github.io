@@ -109,7 +109,7 @@ html.ld-on,html.ld-on body{overflow:hidden}
 @media (max-width:600px){.ld-sym{height:36px}.ld-word{padding-top:5px}.ld-word svg{height:27px}}
 
 /* ===== hero ===== */
-.hero{position:relative;height:516vh;background:var(--deep);color:#fff}
+.hero{position:relative;height:628vh;background:var(--deep);color:#fff}
 .stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--deep)}
 .photo{position:absolute;inset:0;will-change:opacity}
 .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:64% 42%}
@@ -1164,40 +1164,27 @@ function applyChat(p,out){
   }
   return newest;
 }
-// a rolagem é comprimida no começo: a aproximação pede menos rolagem e a conversa quase nenhuma (ela toca sozinha)
-const HSEG=[[0,.02,1],[.02,.40,.10],[.40,.56,.5],[.56,1,1]];
+// a rolagem é comprimida no começo e no fim da conversa: 1 rolada aproxima e traz a 1ª mensagem; 1 rolada por mensagem; 1 rolada do "Quero." à frase
+const HSEG=[[0,.18,.24],[.18,.34,1],[.34,.47,.35],[.47,.56,.5],[.56,1,1]];
 const HRAW=HSEG.reduce((a,g)=>a+(g[1]-g[0])*g[2],0);
 function heroTarget(){ const r=hero.getBoundingClientRect(); const len=hero.offsetHeight-stage.offsetHeight; let u=clamp(-r.top/Math.max(1,len))*HRAW;
   for(const g of HSEG){ const w=(g[1]-g[0])*g[2]; if(u<=w) return g[0]+u/g[2]; u-=w; } return 1; }
-// a abertura toca sozinha: uma rolada dispara a aproximação e, em seguida, as mensagens, uma a uma
-const ZD=1.6, CQ_DUR=5.2; let tl=0, tlT=0, PC=.14;
-function heroClock(p,time,out){
-  const dt=tlT?Math.min(.1,(time-tlT)/1000):0; tlT=time;
-  const END=ZD+CQ_DUR;
-  if(out>0||(reduce&&p>.021)) tl=p>.021?END:0;
-  else if(p>.021) tl=Math.min(END,tl+dt);
-  else tl=Math.max(0,tl-dt*4);
-  PC=.14+.2*clamp((tl-ZD+.2)/CQ_DUR);
-  if(p<=.02||p>=.40) return p;
-  return tl<ZD ? .02+.13*ease(tl/ZD) : .15+.24*clamp((tl-ZD)/CQ_DUR);
-}
-function applyHero(p0,time){
-  const out=range(p0,.40,.47), p=heroClock(p0,time,out);
+function applyHero(p,time){
+  const out=range(p,.40,.47);
   // a câmera se aproxima do celular: a rolagem comanda os quadros do vídeo
   const f=(NF-1)*range(p,P0,P1), ph=phoneAt(f);
   org=ph;
   if(stage.classList.contains('film-on')) drawFilm(f,1-range(p,0,.025));
   const fo=(1-range(p,.56,.64)).toFixed(3); film.style.opacity=fo; photo.style.opacity=fo;
-  hint.style.opacity=(1-range(p0,0,.03)).toFixed(3);
+  hint.style.opacity=(1-range(p,0,.03)).toFixed(3);
   const a1=range(p,.035,.09); f1.style.opacity=(1-a1).toFixed(3); f1.style.transform=`translateY(${(-40*a1).toFixed(1)}px)`;
   const since=(time-T0)/1000, intro=reduce?1:range(since,.3,.8);
   setPin(ph,intro*(1-range(p,.40,.45)));
   // as mensagens chegam com a rolagem, em balões sobre o vídeo; a linha do pin vai até a mais nova
   chatshade.style.opacity=(range(p,.14,.17)*(1-out)).toFixed(3);
-  const pc=PC;
-  const nw=applyChat(pc,out);
+  const nw=applyChat(p,out);
   drawLine(ph,nw,1-out,nw?nw.k:0);
-  hcap.style.opacity=(range(pc,.2,.24)*(1-range(p,.38,.42))).toFixed(3);
+  hcap.style.opacity=(range(p,.2,.24)*(1-range(p,.38,.42))).toFixed(3);
   dim.style.opacity=(range(p,.39,.48)*.6+range(p,.56,.64)*.4).toFixed(3);
   // frase 2
   setChars(chars.f2,range(p,.45,.56));
