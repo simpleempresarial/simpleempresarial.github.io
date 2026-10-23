@@ -109,7 +109,7 @@ html.ld-on,html.ld-on body{overflow:hidden}
 @media (max-width:600px){.ld-sym{height:36px}.ld-word{padding-top:5px}.ld-word svg{height:27px}}
 
 /* ===== hero ===== */
-.hero{position:relative;height:820vh;background:var(--deep);color:#fff}
+.hero{position:relative;height:658vh;background:var(--deep);color:#fff}
 .stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--deep)}
 .photo{position:absolute;inset:0;will-change:opacity}
 .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:64% 42%}
@@ -1164,7 +1164,20 @@ function applyChat(p,out){
   }
   return newest;
 }
-function heroTarget(){ const r=hero.getBoundingClientRect(); const len=hero.offsetHeight-stage.offsetHeight; return clamp(-r.top/Math.max(1,len)); }
+// a rolagem é comprimida no começo: a aproximação pede menos rolagem e a conversa quase nenhuma (ela toca sozinha)
+const HSEG=[[0,.02,1],[.02,.15,.65],[.15,.40,.28],[.40,1,1]];
+const HRAW=HSEG.reduce((a,g)=>a+(g[1]-g[0])*g[2],0);
+function heroTarget(){ const r=hero.getBoundingClientRect(); const len=hero.offsetHeight-stage.offsetHeight; let u=clamp(-r.top/Math.max(1,len))*HRAW;
+  for(const g of HSEG){ const w=(g[1]-g[0])*g[2]; if(u<=w) return g[0]+u/g[2]; u-=w; } return 1; }
+// a conversa: depois da aproximação, as mensagens chegam em sequência, no tempo, sem depender da rolagem
+const CQ_ON=.13, CQ_DUR=5.2; let cq=0, cqT=0;
+function chatClock(p,time,out){
+  const dt=cqT?Math.min(.1,(time-cqT)/1000):0; cqT=time;
+  if(out>0||(reduce&&p>=CQ_ON)) cq=p>=CQ_ON?1:0;
+  else if(p>=CQ_ON) cq=Math.min(1,cq+dt/CQ_DUR);
+  else cq=Math.max(0,cq-dt/.5);
+  return .14+cq*.2;
+}
 function applyHero(p,time){
   // a câmera se aproxima do celular: a rolagem comanda os quadros do vídeo
   const f=(NF-1)*range(p,P0,P1), ph=phoneAt(f);
@@ -1178,9 +1191,10 @@ function applyHero(p,time){
   setPin(ph,intro*(1-range(p,.40,.45)));
   // as mensagens chegam com a rolagem, em balões sobre o vídeo; a linha do pin vai até a mais nova
   chatshade.style.opacity=(range(p,.14,.17)*(1-out)).toFixed(3);
-  const nw=applyChat(p,out);
+  const pc=chatClock(p,time,out);
+  const nw=applyChat(pc,out);
   drawLine(ph,nw,1-out,nw?nw.k:0);
-  hcap.style.opacity=(range(p,.2,.24)*(1-range(p,.38,.42))).toFixed(3);
+  hcap.style.opacity=(range(pc,.2,.24)*(1-range(p,.38,.42))).toFixed(3);
   dim.style.opacity=(range(p,.39,.48)*.6+range(p,.56,.64)*.4).toFixed(3);
   // frase 2
   setChars(chars.f2,range(p,.45,.56));
